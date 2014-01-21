@@ -15,17 +15,26 @@
 # limitations under the License.
 #
 import webapp2
-from models import CacheObject
-
+from models import NetflixCacheObject
 import logging
-class MainHandler(webapp2.RequestHandler):
+
+class NetflixHandler(webapp2.RequestHandler):
     def get(self):
         qs = self.request.query_string
-        result = CacheObject.get_by_cache_key(qs).result
+        result = NetflixCacheObject.get_by_cache_key(qs).result
         self.response.headers['Content-Type'] = 'application/json'
         self.response.headers['Access-Control-Allow-Origin'] = '*'
         self.response.out.write(result)
 
+class YelpHandler(webapp2.RequestHandler):
+    def get(self):
+        qs = self.request.query_string
+        result = YelpCacheObject.get_by_cache_key(qs).result
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.headers['Access-Control-Allow-Origin'] = '*'
+        self.response.out.write(result)        
+
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/netflix/?', NetflixHandler)
+    ('/yelp/?', YelpHandler)
 ], debug=True)
