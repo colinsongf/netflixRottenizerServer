@@ -2,7 +2,7 @@ from google.appengine.ext import db
 from google.appengine.api import memcache, urlfetch
 
 import json
-import oauth2
+import oauth2 as oauth
 import optparse
 import urllib
 import urllib2
@@ -63,23 +63,23 @@ class YelpCacheObject(db.Model):
             url = '%s?%s' % (YELP_API_URL, search_term)
 
             # Sign the URL
-            consumer = oauth2.Consumer(YELP_CONSUMER_KEY, YELP_CONSUMER_SECRET)
-            oauth_request = oauth2.Request('GET', url, {})
+            consumer = oauth.Consumer(YELP_CONSUMER_KEY, YELP_CONSUMER_SECRET)
+            oauth_request = oauth.Request('GET', url, {})
             oauth_request.update({
-                'oauth_nonce': oauth2.generate_nonce(),
-                'oauth_timestamp': oauth2.generate_timestamp(),
+                'oauth_nonce': oauth.generate_nonce(),
+                'oauth_timestamp': oauth.generate_timestamp(),
                 'oauth_token': YELP_TOKEN,
                 'oauth_consumer_key': YELP_CONSUMER_KEY
             })
 
-            token = oauth2.Token(YELP_TOKEN, YELP_TOKEN_SECRET)
-            oauth_request.sign_request(oauth2.SignatureMethod_HMAC_SHA1(), consumer, token)
+            token = oauth.Token(YELP_TOKEN, YELP_TOKEN_SECRET)
+            oauth_request.sign_request(oauth.SignatureMethod_HMAC_SHA1(), consumer, token)
             signed_url = oauth_request.to_url()
             
             obj = YelpCacheObject(
-                cache_key=cache_key,
+                cache_key=search_term,
                 result=urlfetch.fetch(signed_url).content.strip(),
             )
             obj.put()
-            memcache.set(cache_key, obj)
+            memcache.set(search_term, obj)
         return obj

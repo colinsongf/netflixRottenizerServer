@@ -16,6 +16,7 @@
 #
 import webapp2
 from models import NetflixCacheObject
+from models import YelpCacheObject
 import logging
 
 class NetflixHandler(webapp2.RequestHandler):
@@ -35,6 +36,6 @@ class YelpHandler(webapp2.RequestHandler):
         self.response.out.write(result)        
 
 app = webapp2.WSGIApplication([
-    ('/netflix/?', NetflixHandler)
+    ('/netflix/?', NetflixHandler),
     ('/yelp/?', YelpHandler)
 ], debug=True)
