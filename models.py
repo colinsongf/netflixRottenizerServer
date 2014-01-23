@@ -35,12 +35,17 @@ class NetflixCacheObject(db.Model):
         # not in db, so hit rotten tomatoes api
         if not obj:
             url = '%s?apikey=%s&%s' % (ROTTEN_TOMATOES_API_URL, ROTTEN_TOMATOES_API_KEY, cache_key)
-            obj = NetflixCacheObject(
-                cache_key=cache_key,
-                result=urlfetch.fetch(url).content.strip(),
-            )
-            obj.put()
-            memcache.set(cache_key, obj)
+            
+            result = urlfetch.fetch(url).content.strip()
+            json_result = json.loads(result)
+
+            if not 'error' in json_result:
+                obj = NetflixCacheObject(
+                    cache_key=cache_key,
+                    result=result,
+                )
+                obj.put()
+                memcache.set(cache_key, obj)
         return obj
 
 class YelpCacheObject(db.Model):

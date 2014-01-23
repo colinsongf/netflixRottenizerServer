@@ -22,7 +22,11 @@ import logging
 class NetflixHandler(webapp2.RequestHandler):
     def get(self):
         qs = self.request.query_string
-        result = NetflixCacheObject.get_by_cache_key(qs).result
+        movie = NetflixCacheObject.get_by_cache_key(qs)
+        if movie:
+            result = movie.result
+        else:
+            result = {"error": "Probably hit the rate limit, poll again"}
         self.response.headers['Content-Type'] = 'application/json'
         self.response.headers['Access-Control-Allow-Origin'] = '*'
         self.response.out.write(result)
