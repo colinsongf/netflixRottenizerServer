@@ -17,6 +17,11 @@ YELP_TOKEN = "hlhGRCZ-iZ7JdnKOQy77SlWi6rvlrcWr"
 YELP_TOKEN_SECRET = "gUMxvGAfbVgyF2rq1pEkXSGsGHg"
 YELP_API_URL = "http://api.yelp.com/v2/search/"
 
+FOURSQUARE_CLIENT_ID = "5WOKV1QPMOQFBQFX0EUCYWNRSHMXTB2ZOF3HML4TZHJHTORE"
+FOURSQUARE_CLIENT_SECRET = "KO0SGYHUTB3SANZUK0F1WUZTLYT01414MK4LGHHFTGXTBHJP"
+FOURSQUARE_SEARCH_API_URL = "https://api.foursquare.com/v2/venues/search"
+FOURSQUARE_VENUE_API_URL = "https://api.foursquare.com/v2/venues/"
+
 class NetflixCacheObject(db.Model):
     date_created = db.DateTimeProperty(auto_now_add=True)
     date_updated = db.DateTimeProperty(auto_now=True)
@@ -88,3 +93,79 @@ class YelpCacheObject(db.Model):
             obj.put()
             memcache.set(search_term, obj)
         return obj
+
+class FoursquareSearchCacheObject(db.Model):
+    date_created = db.DateTimeProperty(auto_now_add=True)
+    date_updated = db.DateTimeProperty(auto_now=True)
+    cache_key = db.StringProperty(required=True)
+    venue_id = db.TextProperty(required=True)
+
+    @classmethod
+    def get_by_cache_key(klass, search_term):
+        obj = memcache.get(search_term)
+        
+        # not in memcache, so check database and set memcache
+        if not obj:
+            obj = FoursquareSearchCacheObject.all().filter('cache_key =', search_term).get()
+            memcache.set(search_term, obj)
+        
+        # not in db, so hit yelp's api and put in db and memcache
+        if not obj:
+            url = '%s?client_id=%s&client_secret=%s&%s' % (FOURSQUARE_SEARCH_API_URL, FOURSQUARE_CLIENT_ID, FOURSQUARE_CLIENT_SECRET, search_term)
+            response = urlfetch.fetch(url).content.strip()
+            json_response = json.loads(response)
+
+            # get venue id
+            venue_id = json.dumps(json_response['response']['groups'][0]['items'][0]['id'])
+            # venue_id = str(venue_id.replace('"', ''))
+
+            obj = FoursquareSearchCacheObject(
+                cache_key=search_term,
+                venue_id=venue_id
+            )
+            obj.put()
+            memcache.set(search_term, obj)
+        return obj
+
+class FoursquareVenueCacheObject(db.Model):
+    date_created = db.DateTimeProperty(auto_now_add=True)
+    date_updated = db.DateTimeProperty(auto_now=True)
+    cache_key = db.StringProperty(required=True)
+    result = db.TextProperty(required=True)
+
+    @classmethod
+    def get_by_cache_key(klass, search_term):
+        obj = memcache.get(search_term)
+        
+        # not in memcache, so check database and set memcache
+        if not obj:
+            obj = FoursquareVenueCacheObject.all().filter('cache_key =', search_term).get()
+            memcache.set(search_term, obj)
+        
+        # not in db, so hit yelp's api and put in db and memcache
+        if not obj:
+            url = '%s%s?client_id=%s&client_secret=%s' % (FOURSQUARE_VENUE_API_URL, search_term, FOURSQUARE_CLIENT_ID, FOURSQUARE_CLIENT_SECRET )
+            response = urlfetch.fetch(url).content.strip()
+            response = json.loads(response)
+            response = json.dumps(response)
+
+            obj = FoursquareVenueCacheObject(
+                cache_key=search_term,
+                result=response
+            )
+            obj.put()
+            memcache.set(search_term, obj)
+        return obj
+
+
+
+
+
+
+
+
+
+
+
+
+

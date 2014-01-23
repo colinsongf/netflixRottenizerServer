@@ -15,8 +15,7 @@
 # limitations under the License.
 #
 import webapp2
-from models import NetflixCacheObject
-from models import YelpCacheObject
+from models import *
 import logging
 
 class NetflixHandler(webapp2.RequestHandler):
@@ -39,8 +38,30 @@ class YelpHandler(webapp2.RequestHandler):
         self.response.headers['Access-Control-Allow-Origin'] = '*'
         self.response.out.write(result)        
 
+class FoursquareSearchHandler(webapp2.RequestHandler):
+    def get(self):
+        qs = self.request.query_string
+        result = FoursquareSearchCacheObject.get_by_cache_key(qs).venue_id
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.headers['Access-Control-Allow-Origin'] = '*'
+        self.response.out.write(result)
+
+class FoursquareVenueHandler(webapp2.RequestHandler):
+    def get(self):
+        qs = self.request.query_string
+        venue = FoursquareVenueCacheObject.get_by_cache_key(qs)
+        if venue:
+            result = venue.result
+        else:
+            result = {'error': 'something went wrong :('}
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.headers['Access-Control-Allow-Origin'] = '*'
+        self.response.out.write(result)    
+
 app = webapp2.WSGIApplication([
     ('/', NetflixHandler),
     ('/netflix/?', NetflixHandler),
-    ('/yelp/?', YelpHandler)
+    ('/yelp/?', YelpHandler),
+    ('/foursquare/search/?', FoursquareSearchHandler),
+    ('/foursquare/venue/?', FoursquareVenueHandler),
 ], debug=True)
