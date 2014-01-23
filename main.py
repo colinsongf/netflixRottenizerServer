@@ -36,6 +36,7 @@ class YelpHandler(webapp2.RequestHandler):
         self.response.out.write(result)        
 
 app = webapp2.WSGIApplication([
+    ('/', NetflixHandler),
     ('/netflix/?', NetflixHandler),
     ('/yelp/?', YelpHandler)
 ], debug=True)
